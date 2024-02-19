@@ -1,0 +1,127 @@
+{
+  "devId": "DME111_001",
+  "devProfile": "EnergyMeter",
+  "devAdd": 1,
+  "cmdList": [
+    {
+      "cmdName": "TotalActiveEnergy",
+      "modfunc": 3,
+      "regAdd": 6687,
+      "regCount": 2,
+      "regData": "N/A",
+      "cmdType": "R"
+    },
+    {
+      "cmdName": "PartialActiveEnergy",
+      "modfunc": 3,
+      "regAdd": 6697,
+      "regCount": 2,
+      "regData": "N/A",
+      "cmdType": "R"
+    },
+    {
+      "cmdName": "TotalReactiveEnergy",
+      "modfunc": 3,
+      "regAdd": 6691,
+      "regCount": 2,
+      "regData": "N/A",
+      "cmdType": "R"
+    },
+    {
+      "cmdName": "PartialReactiveEnergy",
+      "modfunc": 3,
+      "regAdd": 6702,
+      "regCount": 2,
+      "regData": "N/A",
+      "cmdType": "R"
+    },
+    {
+      "cmdName": "Voltage",
+      "modfunc": 3,
+      "regAdd": 1,
+      "regCount": 2,
+      "regData": "N/A",
+      "cmdType": "R"
+    },
+    {
+      "cmdName": "Current",
+      "modfunc": 3,
+      "regAdd": 7,
+      "regCount": 2,
+      "regData": "N/A",
+      "cmdType": "R"
+    },
+    {
+      "cmdName": "ActivePower",
+      "modfunc": 3,
+      "regAdd": 19,
+      "regCount": 2,
+      "regData": "N/A",
+      "cmdType": "R"
+    },
+    {
+      "cmdName": "ReactivePower",
+      "modfunc": 3,
+      "regAdd": 25,
+      "regCount": 2,
+      "regData": "N/A",
+      "cmdType": "R"
+    },
+    {
+      "cmdName": "PowerFactor",
+      "modfunc": 3,
+      "regAdd": 37,
+      "regCount": 2,
+      "regData": "N/A",
+      "cmdType": "R"
+    },
+    {
+      "cmdName": "Frequency",
+      "modfunc": 3,
+      "regAdd": 49,
+      "regCount": 2,
+      "regData": "N/A",
+      "cmdType": "R"
+    },
+    {
+      "cmdName": "HourCounter",
+      "modfunc": 3,
+      "regAdd": 7679,
+      "regCount": 2,
+      "regData": "N/A",
+      "cmdType": "R"
+    },
+    {
+      "cmdName": "PartialHourCounter",
+      "modfunc": 3,
+      "regAdd": 7681,
+      "regCount": 2,
+      "regData": "N/A",
+      "cmdType": "R"
+    },
+    {
+      "cmdName": "AvgKWPower",
+      "modfunc": 3,
+      "regAdd": 2065,
+      "regCount": 2,
+      "regData": "N/A",
+      "cmdType": "R"
+    },
+    {
+      "cmdName": "MaxAvgKWPower",
+      "modfunc": 3,
+      "regAdd": 2577,
+      "regCount": 2,
+      "regData": "N/A",
+      "cmdType": "R"
+    },
+    {
+      "cmdName": "ProgThreshStat",
+      "modfunc": 3,
+      "regAdd": 8719,
+      "regCount": 2,
+      "regData": "N/A",
+      "cmdType": "R"
+    }
+  ]
+}
