@@ -15,7 +15,8 @@ class mqtt2Modbus_ErrorStatus(Enum):
     MODBUS_IO_FAILED      = 4
     DEVICE_PROFILE_ABSENT = 5
     GENERAL_ERROR         = 6
-    OK                    = 7
+    RESULT_UNKNOWN        = 7
+    OK                    = 8
     
 
 class modbusMsgInfo:
@@ -27,9 +28,23 @@ class modbusMsgInfo:
         self.regData = regDataArr 
         self.valid   = valid
         self.transactionType = opType   
+    
+    @classmethod
+    def default(cls) :
+        return cls(0,0,0,0,0,0,False)
 
-mqttResponse = {"cmdName"  :"","uuid"     :"", "devAdd"   :0, "regData"  :[],"result"   :0} 
-modbusMsgParams = modbusMsgInfo(0,0,0,0,0,0,False) 
+
+mqttResponse = {
+                "cmdName"  :"",
+                "uuid"     :"",
+                "devId":"", 
+                "devAdd"   :0, 
+                "regData"  :[],
+                "result"   :mqtt2Modbus_ErrorStatus.RESULT_UNKNOWN
+                } 
+
+#Alternate constructor!!!!!!! too messy
+modbusMsgParams = modbusMsgInfo.default()
 
 def modbusMsgTx(modbusHandle : minimalmodbus.Instrument,mqttMsg : dict) -> dict:
      
@@ -55,9 +70,10 @@ def modbusMsgTx(modbusHandle : minimalmodbus.Instrument,mqttMsg : dict) -> dict:
 
 def mqttMsg2ModbusMsg(mqttMsg: dict) -> mqtt2Modbus_ErrorStatus | modbusMsgInfo:
 
-    #Declare mqtt response as global
+    #Declare mqtt response as global -> #Format this!!!!
+
     global mqttResponse
-    mqttResponse = {"cmdName":"","uuid":"", "devAdd":0,"regData":[],"result":0} 
+    mqttResponse = {"cmdName"  :"","uuid"     :"","devId":"", "devAdd"   :0, "regData"  :[],"result"   :mqtt2Modbus_ErrorStatus.RESULT_UNKNOWN} 
 
     global modbusMsgParams
     modbusMsgParams = modbusMsgInfo(0,0,0,0,0,0,False) 
@@ -73,7 +89,6 @@ def mqttMsg2ModbusMsg(mqttMsg: dict) -> mqtt2Modbus_ErrorStatus | modbusMsgInfo:
         mqttResponse["result"] = mqtt2Modbus_ErrorStatus.MISSING_PARAMETER.value
         return mqtt2Modbus_ErrorStatus.MISSING_PARAMETER
         
-
     if not "devProfile" in mqttMsg:
         print("\"devProfile\" key was not found")
         mqttResponse["result"] = mqtt2Modbus_ErrorStatus.MISSING_PARAMETER.value
@@ -83,16 +98,23 @@ def mqttMsg2ModbusMsg(mqttMsg: dict) -> mqtt2Modbus_ErrorStatus | modbusMsgInfo:
         print("\"regData\" key was not found")
         mqttResponse["result"] = mqtt2Modbus_ErrorStatus.MISSING_PARAMETER.value
         return mqtt2Modbus_ErrorStatus.MISSING_PARAMETER
+    
     if not "uuid" in mqttMsg:
         print("\"uuid\" key was not found")
         mqttResponse["result"] = mqtt2Modbus_ErrorStatus.MISSING_PARAMETER.value
         return mqtt2Modbus_ErrorStatus.MISSING_PARAMETER
+    
+    if not "devId" in mqttMsg:
+        print("\"devId\" key was not found")
+        mqttResponse["result"] = mqtt2Modbus_ErrorStatus.MISSING_PARAMETER.value
+        return mqtt2Modbus_ErrorStatus.MISSING_PARAMETER
+    
 
     mqttResponse["devAdd"] = mqttMsg["devAdd"]
     mqttResponse["cmdName"] = mqttMsg["cmdName"]
     mqttResponse["uuid"] = mqttMsg["uuid"]
     
-    deviceProfileJsonPath  = 'modbus_instrument_profiles/'+mqttMsg["devProfile"]+'_InstrumentProfile.json'
+    deviceProfileJsonPath  = 'device_profiles/'+mqttMsg["deviceModel"]+'.json'
 
     #Now we determine if such a profile exists on the database
     if not exists(deviceProfileJsonPath):

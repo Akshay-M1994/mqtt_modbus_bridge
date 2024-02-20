@@ -1,7 +1,6 @@
 {
-  "devId": "DME111_001",
-  "devProfile": "EnergyMeter",
-  "devAdd": 1,
+  "deviceModel":"DME111",
+  "devDescription": "AC Modbus Power Meter",
   "cmdList": [
     {
       "cmdName": "TotalActiveEnergy",

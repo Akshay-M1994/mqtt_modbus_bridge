@@ -21,6 +21,7 @@ MQTT_BROKER_PORT = 1884
 MODBUS_CMD_TOPIC =  "modbus_mqtt/cmd_request"
 MODBUS_RESP_TOPIC = "modbus_mqtt/cmd_response"
 
+
 #Message Queue Size
 MQTT_MSG_QUEUE_SIZE = 256
 
