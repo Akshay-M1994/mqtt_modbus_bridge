@@ -38,6 +38,7 @@ mqttResponse = {
                 "cmdName"  :"",
                 "uuid"     :"",
                 "devId":"", 
+                "devProfile":"",
                 "devAdd"   :0, 
                 "regData"  :[],
                 "result"   :mqtt2Modbus_ErrorStatus.RESULT_UNKNOWN
@@ -70,10 +71,16 @@ def modbusMsgTx(modbusHandle : minimalmodbus.Instrument,mqttMsg : dict) -> dict:
 
 def mqttMsg2ModbusMsg(mqttMsg: dict) -> mqtt2Modbus_ErrorStatus | modbusMsgInfo:
 
-    #Declare mqtt response as global -> #Format this!!!!
-
     global mqttResponse
-    mqttResponse = {"cmdName"  :"","uuid"     :"","devId":"", "devAdd"   :0, "regData"  :[],"result"   :mqtt2Modbus_ErrorStatus.RESULT_UNKNOWN} 
+    mqttResponse = {
+                    "cmdName"  :"",
+                    "uuid"     :"",
+                    "devId":"", 
+                    "devProfile":"",
+                    "devAdd"   :0, 
+                    "regData"  :[],
+                    "result"   :mqtt2Modbus_ErrorStatus.RESULT_UNKNOWN
+                    } 
 
     global modbusMsgParams
     modbusMsgParams = modbusMsgInfo(0,0,0,0,0,0,False) 
@@ -113,8 +120,9 @@ def mqttMsg2ModbusMsg(mqttMsg: dict) -> mqtt2Modbus_ErrorStatus | modbusMsgInfo:
     mqttResponse["devAdd"] = mqttMsg["devAdd"]
     mqttResponse["cmdName"] = mqttMsg["cmdName"]
     mqttResponse["uuid"] = mqttMsg["uuid"]
+    mqttResponse["devProfile"]=mqttMsg["devProfile"]
     
-    deviceProfileJsonPath  = 'device_profiles/'+mqttMsg["deviceModel"]+'.json'
+    deviceProfileJsonPath  = 'device_profiles/'+mqttMsg["devProfile"]+'.json'
 
     #Now we determine if such a profile exists on the database
     if not exists(deviceProfileJsonPath):
