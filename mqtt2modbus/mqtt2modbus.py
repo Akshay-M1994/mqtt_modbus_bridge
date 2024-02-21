@@ -121,6 +121,7 @@ def mqttMsg2ModbusMsg(mqttMsg: dict) -> mqtt2Modbus_ErrorStatus | modbusMsgInfo:
     mqttResponse["cmdName"] = mqttMsg["cmdName"]
     mqttResponse["uuid"] = mqttMsg["uuid"]
     mqttResponse["devProfile"]=mqttMsg["devProfile"]
+    mqttResponse["devId"] = mqttMsg["devId"]
     
     deviceProfileJsonPath  = 'device_profiles/'+mqttMsg["devProfile"]+'.json'
 
