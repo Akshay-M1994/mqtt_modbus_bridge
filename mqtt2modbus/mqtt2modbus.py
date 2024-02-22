@@ -19,7 +19,7 @@ class mqtt2Modbus_ErrorStatus(Enum):
     OK                    = 8
     
 
-class modbusMsgInfo:
+class modbusMsg:
     def __init__(self,regAdd: int,regCount: int, modFunc: int, devAdd: int,opType: int, regDataArr,valid : bool):
         self.devAdd = devAdd
         self.regAdd = regAdd
@@ -33,19 +33,23 @@ class modbusMsgInfo:
     def default(cls) :
         return cls(0,0,0,0,0,0,False)
 
+class modbusMqttMsg:
+    def __init__(self,commandName:str,uuid:str,devId:str,devProfile:str,devAdd:int,regData: list, result: int):
+        self.modbusMqttMsg = {
+                                "cmdName"  :commandName,
+                                "uuid"     :uuid,
+                                "devId"    :devId, 
+                                "devProfile":devProfile,
+                                "devAdd"   :devAdd, 
+                                "regData"  :regData,
+                                "result"   :result
+                             }
+    @classmethod
+    def default(cls):
+        return cls("","","","",0,[],mqtt2Modbus_ErrorStatus.RESULT_UNKNOWN.value)
 
-mqttResponse = {
-                "cmdName"  :"",
-                "uuid"     :"",
-                "devId":"", 
-                "devProfile":"",
-                "devAdd"   :0, 
-                "regData"  :[],
-                "result"   :mqtt2Modbus_ErrorStatus.RESULT_UNKNOWN
-                } 
-
-#Alternate constructor!!!!!!! too messy
-modbusMsgParams = modbusMsgInfo.default()
+mqttResponse =modbusMqttMsg.default()
+modbusMsgParams = modbusMsg.default()
 
 def modbusMsgTx(modbusHandle : minimalmodbus.Instrument,mqttMsg : dict) -> dict:
      
@@ -69,21 +73,14 @@ def modbusMsgTx(modbusHandle : minimalmodbus.Instrument,mqttMsg : dict) -> dict:
      return mqttResponse
 
 
-def mqttMsg2ModbusMsg(mqttMsg: dict) -> mqtt2Modbus_ErrorStatus | modbusMsgInfo:
+def mqttMsg2ModbusMsg(mqttMsg: dict) -> mqtt2Modbus_ErrorStatus | modbusMsg:
 
     global mqttResponse
-    mqttResponse = {
-                    "cmdName"  :"",
-                    "uuid"     :"",
-                    "devId":"", 
-                    "devProfile":"",
-                    "devAdd"   :0, 
-                    "regData"  :[],
-                    "result"   :mqtt2Modbus_ErrorStatus.RESULT_UNKNOWN
-                    } 
+    mqttResponse =modbusMqttMsg.default()
+
 
     global modbusMsgParams
-    modbusMsgParams = modbusMsgInfo(0,0,0,0,0,0,False) 
+    modbusMsgParams = modbusMsg(0,0,0,0,0,0,False) 
 
     #Ensure that message has all the required keys
     if not "cmdName" in mqttMsg:
