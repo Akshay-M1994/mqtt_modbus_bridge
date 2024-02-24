@@ -17,7 +17,16 @@ class mqtt2Modbus_ErrorStatus(Enum):
     GENERAL_ERROR         = 6
     RESULT_UNKNOWN        = 7
     OK                    = 8
-    
+
+class modbus_function_codes(Enum):
+    READ_COILS                  = 1
+    READ_CONTACTS               = 2
+    READ_HOLDING_REGISTERS      = 3
+    READ_INPUT_REGISTERS        = 4
+    WRITE_SINGLE_COIL           = 5
+    WRITE_SINGLE_REGISTER       = 6
+    WRITE_MULTIPLE_COILS        = 15
+    WRITE_MULTIPLE_REGISTERS    = 16
 
 class modbusMsg:
     def __init__(self,regAdd: int,regCount: int, modFunc: int, devAdd: int,opType: int, regDataArr,valid : bool):
@@ -34,21 +43,40 @@ class modbusMsg:
         return cls(0,0,0,0,0,0,False)
 
 class modbusMqttMsg:
-    def __init__(self,commandName:str,uuid:str,devId:str,devProfile:str,devAdd:int,regData: list, result: int):
-        self.modbusMqttMsg = {
-                                "cmdName"  :commandName,
-                                "uuid"     :uuid,
-                                "devId"    :devId, 
-                                "devProfile":devProfile,
-                                "devAdd"   :devAdd, 
-                                "regData"  :regData,
-                                "result"   :result
-                             }
-    @classmethod
-    def default(cls):
-        return cls("","","","",0,[],mqtt2Modbus_ErrorStatus.RESULT_UNKNOWN.value)
+    def blankMsg():
+        blank = {
+                    "cmdName"   :"",
+                    "uuid"      :"",
+                    "devId"     :"", 
+                    "devProfile":"",
+                    "modfunc"   :"",
+                    "devAdd"    :0, 
+                    "regAdd"    :0,
+                    "regCount"  :0,
+                    "regData"   :[],
+                    "result"    :mqtt2Modbus_ErrorStatus.RESULT_UNKNOWN.value
+                }
+        
+        return blank
 
-mqttResponse =modbusMqttMsg.default()
+    def CreateMsg(cmdName:str,uuid:str,devId:str,devProfile:str,modfunc:int,devAdd:int,regAdd:int,regCount:int,regData:int,result:int):
+        Msg = {
+                    "cmdName"   :cmdName,
+                    "uuid"      :uuid,
+                    "devId"     :devId, 
+                    "devProfile":devProfile,
+                    "modfunc"   :modfunc,
+                    "devAdd"    :devAdd,
+                    "regAdd"    :regAdd,
+                    "regCount"  :regCount,
+                    "regData"   :regData,
+                    "result"    :result
+              }
+        
+        return Msg
+
+
+mqttResponse = modbusMqttMsg.blankMsg()
 modbusMsgParams = modbusMsg.default()
 
 def modbusMsgTx(modbusHandle : minimalmodbus.Instrument,mqttMsg : dict) -> dict:
@@ -63,12 +91,33 @@ def modbusMsgTx(modbusHandle : minimalmodbus.Instrument,mqttMsg : dict) -> dict:
         modbusHandle.address = modbusMsgParams.devAdd
         #Attempt to read/write to modbus depending on command
         try:
-            if modbusMsgParams.transactionType == 0:
-                mqttResponse["regData"]  = modbusHandle.read_registers(modbusMsgParams.regAdd, modbusMsgParams.regCount)
-            else:
-                mqttResponse["regData"]  = modbusHandle.write_registers(modbusMsgParams.regAdd, modbusMsgParams.regData)
+            match modbusMsgParams.modfunc:
+                case modbus_function_codes.READ_COILS.value:
+                    mqttResponse["regData"] = modbusHandle.read_bit(modbusMsgParams.regAdd,modbusMsgParams.modfunc)
+                
+                case modbus_function_codes.READ_CONTACTS.value:
+                    mqttResponse["regData"] = modbusHandle.read_bits(modbusMsgParams.regAdd,modbusMsgParams.regCount,modbusMsgParams.modfunc)
+
+                case modbus_function_codes.READ_HOLDING_REGISTERS.value:
+                    mqttResponse["regData"] = modbusHandle.read_registers(modbusMsgParams.regAdd,modbusMsgParams.regCount,modbusMsgParams.modfunc)
+
+                case modbus_function_codes.READ_INPUT_REGISTERS.value:
+                    mqttResponse["regData"] = modbusHandle.read_registers(modbusMsgParams.regAdd,modbusMsgParams.regCount,modbusMsgParams.modfunc)
+
+                case modbus_function_codes.WRITE_SINGLE_COIL.value:
+                    mqttResponse["regData"] = modbusHandle.write_bit(modbusMsgParams.regAdd,modbusMsgParams.regData,modbusMsgParams.modfunc)
+                
+                case modbus_function_codes.WRITE_SINGLE_REGISTER.value:
+                    mqttResponse["regData"] = modbusHandle.write_registers(modbusMsgParams.regAdd,modbusMsgParams.regData,modbusMsgParams.modfunc)
+
+                case modbus_function_codes.WRITE_MULTIPLE_COILS.value:
+                    mqttResponse["regData"] = modbusHandle.write_registers(modbusMsgParams.regAdd,modbusMsgParams.regData,modbusMsgParams.modfunc)
+
+                case modbus_function_codes.WRITE_MULTIPLE_REGISTERS.value:
+                    mqttResponse["regData"] = modbusHandle.write_registers(modbusMsgParams.regAdd,modbusMsgParams.regData,modbusMsgParams.modfunc)
+
         except:
-            mqttResponse["result"] = mqtt2Modbus_ErrorStatus.MODBUS_IO_FAILED.value
+                    mqttResponse["result"] = mqtt2Modbus_ErrorStatus.MODBUS_IO_FAILED.value
  
      return mqttResponse
 
@@ -76,11 +125,10 @@ def modbusMsgTx(modbusHandle : minimalmodbus.Instrument,mqttMsg : dict) -> dict:
 def mqttMsg2ModbusMsg(mqttMsg: dict) -> mqtt2Modbus_ErrorStatus | modbusMsg:
 
     global mqttResponse
-    mqttResponse =modbusMqttMsg.default()
-
+    mqttResponse = modbusMqttMsg.blankMsg()
 
     global modbusMsgParams
-    modbusMsgParams = modbusMsg(0,0,0,0,0,0,False) 
+    modbusMsgParams = modbusMsg.default() 
 
     #Ensure that message has all the required keys
     if not "cmdName" in mqttMsg:
@@ -114,61 +162,61 @@ def mqttMsg2ModbusMsg(mqttMsg: dict) -> mqtt2Modbus_ErrorStatus | modbusMsg:
         return mqtt2Modbus_ErrorStatus.MISSING_PARAMETER
     
 
-    mqttResponse["devAdd"] = mqttMsg["devAdd"]
-    mqttResponse["cmdName"] = mqttMsg["cmdName"]
-    mqttResponse["uuid"] = mqttMsg["uuid"]
-    mqttResponse["devProfile"]=mqttMsg["devProfile"]
-    mqttResponse["devId"] = mqttMsg["devId"]
+    mqttResponse = modbusMqttMsg.CreateMsg(
+                                            mqttMsg["cmdName"],
+                                            mqttMsg["uuid"],
+                                            mqttMsg["devId"],
+                                            mqttMsg["devProfile"],
+                                            mqttMsg["modfunc"],
+                                            mqttMsg["devAdd"],
+                                            mqttMsg["regAdd"],
+                                            mqttMsg["regCount"],
+                                            mqttMsg["regData"],
+                                            mqtt2Modbus_ErrorStatus.RESULT_UNKNOWN
+                                          )
     
-    deviceProfileJsonPath  = 'device_profiles/'+mqttMsg["devProfile"]+'.json'
-
-    #Now we determine if such a profile exists on the database
-    if not exists(deviceProfileJsonPath):
-        mqttResponse["result"] = mqtt2Modbus_ErrorStatus.DEVICE_PROFILE_ABSENT.value
-        return mqtt2Modbus_ErrorStatus.DEVICE_PROFILE_ABSENT
-    
-    try:
-        #Open device profile json object
-        deviceProfileJsonFile = open(deviceProfileJsonPath)
-
-        #Create device profile dictionary
-        deviceProfileDictionary = json.load(deviceProfileJsonFile)
-
-        #Filter through command list in device profile to determine if command in mqtt msg exists
-        for cmd in deviceProfileDictionary["cmdList"]:
-            
-            if(cmd["cmdName"] == mqttMsg["cmdName"]):
+   
                 
-                #If command can be found in devices profile then extract the function and register address parameters
-                modbusMsgParams.modfunc = cmd["modfunc"]
-                modbusMsgParams.regAdd  = cmd["regAdd"]
-                modbusMsgParams.regCount = cmd["regCount"]
-                modbusMsgParams.devAdd = mqttMsg["devAdd"]
-                modbusMsgParams.valid = True
+    #If command can be found in devices profile then extract the function and register address parameters
+    modbusMsgParams =  modbusMsg(
+                                    mqttMsg["regAdd"],
+                                    mqttMsg["regCount"],
+                                    mqttMsg["modfunc"],
+                                    mqttMsg["devAdd"],
+                                    0 if mqttMsg["modfunc"] <= 4 else 1,
+                                    mqttMsg["regData"],
+                                    True
+                                )
 
-                if cmd["cmdType"] == "R":
-                    modbusMsgParams.transactionType = 0
-                else:
-                    modbusMsgParams.transactionType = 1
+    mqttResponse["result"] = mqtt2Modbus_ErrorStatus.OK.value
+    return modbusMsgParams
 
-                #Determine if this command requires additional data/parameters
-                if cmd["regData"] != "N/A":
-                    modbusMsgParams.regData = mqttMsg["regData"] 
-                break
+    
 
-        #Close the file
-        deviceProfileJsonFile.close()
 
-        if modbusMsgParams.valid == True:
-            mqttResponse["result"] = mqtt2Modbus_ErrorStatus.OK.value
-            return modbusMsgParams
-        else: 
-            mqttResponse["result"] = mqtt2Modbus_ErrorStatus.INVALID_CMD.value
-            return mqtt2Modbus_ErrorStatus.INVALID_CMD
 
-    except:
-        mqttResponse["result"] = mqtt2Modbus_ErrorStatus.GENERAL_ERROR.value
-        return mqtt2Modbus_ErrorStatus.GENERAL_ERROR
+
+    
+
+
+
+
+
+    
+
+
+
+
+    
+
+
+
+
+    
+
+
+
+
     
 
 
