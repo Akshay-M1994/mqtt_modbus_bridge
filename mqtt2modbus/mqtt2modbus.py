@@ -4,7 +4,7 @@ import json
 import sys
 from os.path import exists
 from enum import Enum
-import logging
+from debug_nid import debug
 
 
 class mqtt2Modbus_ErrorStatus(Enum):
@@ -132,32 +132,32 @@ def mqttMsg2ModbusMsg(mqttMsg: dict) -> mqtt2Modbus_ErrorStatus | modbusMsg:
 
     #Ensure that message has all the required keys
     if not "cmdName" in mqttMsg:
-        print("\"cmdName\" key was not found")
+        debug.logging.debug("\"cmdName\" key was not found")
         mqttResponse["result"] = mqtt2Modbus_ErrorStatus.MISSING_PARAMETER.value
         return mqtt2Modbus_ErrorStatus.MISSING_PARAMETER
     
     if not "devAdd" in mqttMsg:
-        print("\"devAdd\" key was not found")
+        debug.logging.debug("\"devAdd\" key was not found")
         mqttResponse["result"] = mqtt2Modbus_ErrorStatus.MISSING_PARAMETER.value
         return mqtt2Modbus_ErrorStatus.MISSING_PARAMETER
         
     if not "devProfile" in mqttMsg:
-        print("\"devProfile\" key was not found")
+        debug.logging.debug("\"devProfile\" key was not found")
         mqttResponse["result"] = mqtt2Modbus_ErrorStatus.MISSING_PARAMETER.value
         return mqtt2Modbus_ErrorStatus.MISSING_PARAMETER
     
     if not "regData" in mqttMsg:
-        print("\"regData\" key was not found")
+        debug.logging.debug("\"regData\" key was not found")
         mqttResponse["result"] = mqtt2Modbus_ErrorStatus.MISSING_PARAMETER.value
         return mqtt2Modbus_ErrorStatus.MISSING_PARAMETER
     
     if not "uuid" in mqttMsg:
-        print("\"uuid\" key was not found")
+        debug.logging.debug("\"uuid\" key was not found")
         mqttResponse["result"] = mqtt2Modbus_ErrorStatus.MISSING_PARAMETER.value
         return mqtt2Modbus_ErrorStatus.MISSING_PARAMETER
     
     if not "devId" in mqttMsg:
-        print("\"devId\" key was not found")
+        debug.logging.debug("\"devId\" key was not found")
         mqttResponse["result"] = mqtt2Modbus_ErrorStatus.MISSING_PARAMETER.value
         return mqtt2Modbus_ErrorStatus.MISSING_PARAMETER
     

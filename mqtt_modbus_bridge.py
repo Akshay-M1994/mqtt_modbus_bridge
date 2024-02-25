@@ -4,10 +4,12 @@ import minimalmodbus
 import pyRTOS
 import pyRTOS.message
 import json
-import logging
+#import logging
+from debug_nid import debug
 import sys
 import mqtt2modbus.mqtt2modbus
 from   dotenv import load_dotenv
+import os
 
 
 #Serial port config details
@@ -29,30 +31,30 @@ MQTT_MSG_QUEUE_SIZE = 256
 
 def on_disconnect(self, client, userdata, reason_code, properties):
     #Log error code
-    logging.debug('Connection result code ' + str(reason_code))  
-    logging.debug('MQTT Client Disconnected.Attempting Reconnection...')
+    debug.logging.debug('Connection result code ' + str(reason_code))  
+    debug.logging.debug('MQTT Client Disconnected.Attempting Reconnection...')
 
 def on_publish(client, userdata, mid, reason_code, properties):
     # reason_code and properties will only be present in MQTTv5. It's always unset in MQTTv3
-    logging.debug(f"on_publish callback triggered with reason code :{reason_code}")
+    debug.logging.debug(f"on_publish callback triggered with reason code :{reason_code}")
 
 def on_subscribe(client, userdata, mid, reason_code_list, properties):
     if reason_code_list[-1].is_failure:
-        logging.debug(f"Broker rejected you subscription: {reason_code_list[-1]}")
+        debug.logging.debug(f"Broker rejected you subscription: {reason_code_list[-1]}")
     else:
-        logging.debug(f"Broker granted the following QoS: {reason_code_list[-1].value}")
+        debug.logging.debug(f"Broker granted the following QoS: {reason_code_list[-1].value}")
 
 def on_unsubscribe(client, userdata, mid, reason_code_list, properties):
     # Be careful, the reason_code_list is only present in MQTTv5.
     if len(reason_code_list) == 0 or not reason_code_list[-1].is_failure:
-        logging.debug("unsubscribe succeeded (if SUBACK is received in MQTTv3 it success)")
+        debug.logging.debug("unsubscribe succeeded (if SUBACK is received in MQTTv3 it success)")
     else:
-        logging.debug(f"Broker replied with failure: {reason_code_list[-1]}")
+        debug.logging.debug(f"Broker replied with failure: {reason_code_list[-1]}")
 
     client.disconnect()    
 
 def on_connect(client, userdata, flags, reason_code, properties):
-    logging.debug(f"Connected with result code : {reason_code}")
+    debug.logging.debug(f"Connected with result code : {reason_code}")
     # Subscribing in on_connect() means that if we lose the connection and
     # reconnect then subscriptions will be renewed.
     client.subscribe(MODBUS_CMD_TOPIC)
@@ -61,23 +63,23 @@ def on_connect(client, userdata, flags, reason_code, properties):
 def on_message(client, userdata, msg):
     
     #Log receipt of msg
-    logging.debug(f"Msg received on topic:"+msg.topic+" Payload:" +str(msg.payload))
+    debug.logging.debug(f"Msg received on topic:"+msg.topic+" Payload:" +str(msg.payload))
     
     try:
         #Convert to JSON object
         mqttJsonMsg = json.loads(msg.payload)
 
     except TypeError as typeErr:
-        logging.error(f"{typeErr}")
+        debug.logging.error(f"{typeErr}")
 
     except ValueError as valueErr:
-        logging.error(f"{valueErr}")
+        debug.logging.error(f"{valueErr}")
 
     #Add message to queue
     if mqttMsgQueue.nb_send(mqttJsonMsg) == True:
-        logging.debug(f"Msg added to queue!")
+        debug.logging.debug(f"Msg added to queue!")
     else :
-        logging.debug(f"Failed to add msg to queue!")
+        debug.logging.debug(f"Failed to add msg to queue!")
 
 
 #Task responsible for pulling modbus requests of the queue and placing them on the bus
@@ -97,7 +99,7 @@ def modbus_manager_task(self):
             mqttModbusResponse = mqtt2modbus.modbusMsgTx(modbus_port,mqttMsg)
             
             #Log response
-            logging.debug(f"Attempting to publish:"+json.dumps(mqttModbusResponse))
+            debug.logging.debug(f"Attempting to publish:"+json.dumps(mqttModbusResponse))
             
             #publish response
             mqttc.publish(MODBUS_RESP_TOPIC,json.dumps(mqttModbusResponse))
@@ -116,11 +118,8 @@ def mqtt_manager_task(self):
 #Load environment variable file
 load_dotenv()
 
-#Setting up logging module
-logging.basicConfig(filename='mqtt_modbus_bridge.log',format='%(asctime)s - %(message)s - %(levelname)s', datefmt='%d-%b-%y %H:%M:%S',level=logging.DEBUG)
-
 #Log startup info
-logging.debug("[Starting Modbus Mqtt Bridge]")
+debug.logging.debug("[Starting Modbus Mqtt Bridge:%s]",os.getenv('MQTT_MODBUS_BRIDGE_VERSION'))
 
 #Setting up MQTT comms
 mqttc = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
@@ -139,7 +138,7 @@ try:
     rs485_serial.rs485_mode = serial.rs485.RS485Settings(False,True)
 except IOError as e:
     #This is a critical error -> Terminate script
-    logging.error(f"{e}")
+    debug.logging.error(f"{e}")
     sys.exit()
 
 #Create and configure a "modbus instrument"
