@@ -7,6 +7,8 @@ import json
 import logging
 import sys
 import mqtt2modbus.mqtt2modbus
+from   dotenv import load_dotenv
+
 
 #Serial port config details
 RS485_PORT = "/dev/ttyTHS1"
@@ -111,9 +113,11 @@ def mqtt_manager_task(self):
         #logging.debug("Mqtt Manager Task Running\r\n")
         yield [pyRTOS.timeout(3)]
 
+#Load environment variable file
+load_dotenv()
 
 #Setting up logging module
-logging.basicConfig(format='%(asctime)s - %(message)s - %(levelname)s', datefmt='%d-%b-%y %H:%M:%S',level=logging.DEBUG)
+logging.basicConfig(filename='mqtt_modbus_bridge.log',format='%(asctime)s - %(message)s - %(levelname)s', datefmt='%d-%b-%y %H:%M:%S',level=logging.DEBUG)
 
 #Log startup info
 logging.debug("[Starting Modbus Mqtt Bridge]")
