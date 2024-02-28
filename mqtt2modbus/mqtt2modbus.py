@@ -49,7 +49,7 @@ class modbusMqttMsg:
                     "uuid"      :"",
                     "devId"     :"", 
                     "devProfile":"",
-                    "modfunc"   :"",
+                    "modfunc"   :0,
                     "devAdd"    :0, 
                     "regAdd"    :0,
                     "regCount"  :0,
